@@ -6,6 +6,7 @@ import torchvision
 import torchvision.transforms as transforms
 from modeling_uvit import Mish, Upsample2D
 import numpy as np
+import time
 
 
 # Define a simple model using the provided components
@@ -18,11 +19,15 @@ class SimpleModel(nn.Module):
 
 
     def forward(self, x):
+        start_time = time.time()  
         x = self.up(x)
+        elapsed_time = time.time() - start_time 
+
         x = self.activation(x)
         x = x.view(x.size(0), -1)  # Flatten the output to match [batch_size, num_features]
         x = self.classifier(x)
-        return x
+
+        return x, elapsed_time
 
 
 # Data transforms
@@ -37,6 +42,7 @@ if __name__ == '__main__':
     num_dev_samples = 50000  # Total is 50,000 for CIFAR-10
     lr = 0.001
     step_size = 5
+    times = []
 
 
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
@@ -93,7 +99,8 @@ if __name__ == '__main__':
         for epoch in range(3):
             for data, target in trainloader:
                 optimizer.zero_grad()
-                output = model(data)
+                output, time_elapsed = model(data)
+                times.append(time_elapsed)
                 loss = criterion(output, target)
                 loss.backward()
                 optimizer.step()
@@ -104,13 +111,13 @@ if __name__ == '__main__':
             val_loss = 0
             with torch.no_grad():
                 for data, target in valloader:
-                    output = model(data)
+                    output, _ = model(data)
                     val_loss += criterion(output, target).item()
 
 
             val_loss /= len(valloader)
             print(f'Epoch {epoch+1}, Training Loss: {loss.item()}, Validation Loss: {val_loss}')
-            scheduler.step(val_loss)
+            scheduler.step()
 
 
     train_and_validate_model()
@@ -124,7 +131,7 @@ if __name__ == '__main__':
 
         with torch.no_grad():  # No need to track gradients for testing
             for data, target in testloader:
-                output = model(data)
+                output, _ = model(data)
                 _, predicted = torch.max(output.data, 1)  # Get the index of the max log-probability
                 total += target.size(0)
                 correct += (predicted == target).sum().item()
@@ -132,6 +139,7 @@ if __name__ == '__main__':
 
         accuracy = 100 * correct / total
         print(f'Accuracy of the model on the test images: {accuracy:.2f}%')
+        print(f'Average time per forward pass: {np.mean(times)}')
 
 
     test_model()
