@@ -27,6 +27,8 @@ class Upsample2D(nn.Module):
         if use_conv_transpose:
             self.conv = nn.ConvTranspose2d(channels, self.out_channels, 4, 2, 1)
         elif use_conv:
+            print(self.channels)
+            print(self.out_channels)
             self.conv = nn.Conv2d(self.channels, self.out_channels, 3, padding=1)
 
     def forward(self, hidden_states, output_size=None):
