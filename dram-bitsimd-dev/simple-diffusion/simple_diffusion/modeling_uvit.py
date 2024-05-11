@@ -2,6 +2,8 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+# import time
+
 class Mish(torch.nn.Module):
     def forward(self, hidden_states):
         return hidden_states * torch.tanh(torch.nn.functional.softplus(hidden_states))
@@ -53,6 +55,41 @@ class Upsample2D(nn.Module):
 
         return hidden_states
 
+# Alternate version for convolution percentage timing, import time
+# class Upsample2D(nn.Module):
+#     def __init__(self, channels, use_conv=False, use_conv_transpose=False, out_channels=None):
+#         super().__init__()
+#         self.channels = channels
+#         self.out_channels = out_channels or channels
+#         self.use_conv = use_conv
+#         self.use_conv_transpose = use_conv_transpose
+#         self.conv_time = 0  # Add a property to track convolution time
+
+#         if use_conv_transpose:
+#             self.conv = nn.ConvTranspose2d(channels, self.out_channels, 4, 2, 1)
+#         elif use_conv:
+#             self.conv = nn.Conv2d(self.channels, self.out_channels, 3, padding=1)
+
+#     def forward(self, hidden_states, output_size=None):
+#         assert hidden_states.shape[1] == self.channels
+
+#         if self.use_conv_transpose:
+#             return self.conv(hidden_states)
+
+#         if hidden_states.shape[0] >= 64:
+#             hidden_states = hidden_states.contiguous()
+
+#         if output_size is None:
+#             hidden_states = F.interpolate(hidden_states, scale_factor=2.0, mode="nearest")
+#         else:
+#             hidden_states = F.interpolate(hidden_states, size=output_size, mode="nearest")
+
+#         if self.use_conv:
+#             start_conv_time = time.time()
+#             hidden_states = self.conv(hidden_states)
+#             self.conv_time += time.time() - start_conv_time
+
+#         return hidden_states
 
 class Downsample2D(nn.Module):
     """
