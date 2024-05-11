@@ -21,7 +21,7 @@ class TransformedDataset(Dataset):
         return image, label
 
 transform = transforms.Compose([
-    transforms.Resize((128, 128)),  # Resize to 128x128
+    transforms.Resize((64, 64)),  # Resize to 64x64
     transforms.ToTensor(),  
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
